@@ -1,9 +1,7 @@
 export function Login() {
     return(
         <div>
-            <div>
-
-            </div>
+            <h1>Dev <span>Link</span> </h1>
         </div>
     )
 }
