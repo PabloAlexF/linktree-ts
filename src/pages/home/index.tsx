@@ -1,4 +1,5 @@
-import { FiLink, FiMail, FiYoutube, FiGithub } from 'react-icons/fi';
+import { FiLink, FiMail, FiYoutube, FiGithub, FiInstagram, FiLinkedin } from 'react-icons/fi';
+import { Social } from '../../components/Social';
 
 export function Home() {
     return (
@@ -64,9 +65,13 @@ export function Home() {
                         <FiLink className="text-gray-400" />
                     </a>
                 </section>
-
-                <div className="mt-8 text-center text-gray-500 text-sm">Feito com ❤️ — Obrigado por visitar!</div>
             </main>
+
+            <footer>
+                <Social url="https://www.linkedin.com/in/pabloalex/">
+                    <FiLinkedin size={35} color='#fff'/>
+                </Social>
+            </footer>
         </div>
     );
 }
