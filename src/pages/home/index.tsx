@@ -67,9 +67,12 @@ export function Home() {
                 </section>
             </main>
 
-            <footer>
+            <footer className='flex justify-center gap-3 my-4'>
                 <Social url="https://www.linkedin.com/in/pabloalex/">
                     <FiLinkedin size={35} color='#fff'/>
+                </Social>
+                <Social url="https://github.com/PabloAlexF">
+                    <FiGithub size={35} color='#fff'/>
                 </Social>
             </footer>
         </div>
