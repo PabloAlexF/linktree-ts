@@ -5,7 +5,10 @@ import {Login} from "../src/pages/login"
 import {Admin} from "../src/pages/admin"
 import {NotFound} from "../src/pages/404"
 
+import {Private} from "./routes/Private"
+
 const router = createBrowserRouter([
+
 
   {
     path: "/",
@@ -21,7 +24,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/admin",
-    element: <Admin/>
+    element: <Private> <Admin/> </Private>
   },
   {
     path: "*",
