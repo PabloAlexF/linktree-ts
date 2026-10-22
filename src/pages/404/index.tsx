@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { BiLink, BiHomeAlt, BiArrowBack } from "react-icons/bi";
 
@@ -6,26 +5,22 @@ export function NotFound() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-950 px-4 text-white">
       <div className="w-full max-w-lg text-center">
-
         <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl border border-violet-500/20 bg-violet-500/10 text-violet-400 shadow-lg shadow-violet-950/20">
           <BiLink size={42} />
         </div>
 
- 
         <h1 className="text-8xl font-extrabold tracking-tighter text-violet-500 sm:text-9xl">
           404
         </h1>
 
- 
         <h2 className="mt-4 text-2xl font-bold sm:text-3xl">
           Página não encontrada!
         </h2>
 
         <p className="mx-auto mt-4 max-w-sm text-sm leading-6 text-gray-400 sm:text-base">
-          Ops! Parece que o link que você acessou não existe ou foi movido
-          para outro endereço.
+          Ops! Parece que o link que você acessou não existe ou foi movido para
+          outro endereço.
         </p>
-
 
         <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
           <Link
@@ -46,9 +41,7 @@ export function NotFound() {
           </button>
         </div>
 
-        <p className="mt-12 text-xs text-gray-600">
-          Pablo | Linketree
-        </p>
+        <p className="mt-12 text-xs text-gray-600">Pablo | Linketree</p>
       </div>
     </div>
   );

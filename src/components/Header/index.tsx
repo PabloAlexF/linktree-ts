@@ -1,19 +1,12 @@
-
-import {
-  BiLogOut,
-  BiHomeAlt,
-  BiLink,
-  BiShareAlt,
-} from "react-icons/bi";
+import { BiLogOut, BiHomeAlt, BiLink, BiShareAlt } from "react-icons/bi";
 
 import { Link } from "react-router-dom";
 
-import {auth} from "../../services/firebaseConnection"
-import {signOut} from "firebase/auth"
+import { auth } from "../../services/firebaseConnection";
+import { signOut } from "firebase/auth";
 
-
- async function handleLogout(){
-    await signOut(auth)
+async function handleLogout() {
+  await signOut(auth);
 }
 
 export function Header() {
@@ -21,23 +14,15 @@ export function Header() {
     <div>
       <header className="sticky top-0 z-50 w-full border-b text-white shadow-lg">
         <nav className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-
-          <Link
-            to="/"
-            className="flex shrink-0 items-center gap-3"
-          >
+          <Link to="/" className="flex shrink-0 items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600 shadow-md shadow-violet-950/40">
               <BiLink size={25} />
             </div>
 
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold tracking-tight">
-                ReactLinks
-              </h1>
+              <h1 className="text-lg font-bold tracking-tight">ReactLinks</h1>
 
-              <p className="text-xs text-gray-400">
-                Painel de gerenciamento
-              </p>
+              <p className="text-xs text-gray-400">Painel de gerenciamento</p>
             </div>
           </Link>
 
@@ -63,12 +48,8 @@ export function Header() {
               className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-300 transition-all duration-200 hover:bg-gray-800 hover:text-white sm:px-4"
             >
               <BiShareAlt size={20} />
-              <span className="hidden md:inline">
-                Redes Sociais
-              </span>
-              <span className="md:hidden">
-                Redes
-              </span>
+              <span className="hidden md:inline">Redes Sociais</span>
+              <span className="md:hidden">Redes</span>
             </Link>
 
             <button
@@ -81,7 +62,6 @@ export function Header() {
               <BiLogOut size={24} />
             </button>
           </div>
-
         </nav>
       </header>
     </div>
