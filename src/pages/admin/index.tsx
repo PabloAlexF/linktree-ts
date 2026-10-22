@@ -1,3 +1,4 @@
+
 import { Header } from "../../components/Header";
 import { useState } from "react";
 import { Input } from "../../components/Input";
@@ -14,15 +15,17 @@ export function Admin() {
   const [nameLink, setNameLink] = useState("");
   const [urlLink, setUrlLink] = useState("");
   const [textColorInput, settextColorInput] = useState("#f1f1f1");
-  const [backgroundColorInput, setbackgroundColorInput] = useState("#121212");
+  const [backgroundColorInput, setbackgroundColorInput] =
+    useState("#121212");
   const [subtitleTextColor, setSubtitleTextColor] = useState("#f2f2f2");
-  const [backgroundColorIcon, setbackgroundColorIcon] = useState("transparent");
+  const [backgroundColorIcon, setbackgroundColorIcon] =
+    useState("transparent");
 
   return (
-    <div className="flex items-center flex-col min-h-screen pb-7 px-2">
+    <div className="flex min-h-screen flex-col items-center px-2 pb-7">
       <Header />
 
-      <form className=" mb-3 m-20 flex w-full max-w-md flex-col gap-2 max-w-xl">
+      <form className="my-20 mb-3 flex w-full max-w-xl flex-col gap-2">
         <label
           htmlFor="linkName"
           className="text-sm font-semibold text-gray-200"
@@ -67,7 +70,10 @@ export function Admin() {
               />
 
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">Cor do texto</span>
+                <span className="text-xs text-gray-400">
+                  Cor do texto
+                </span>
+
                 <span className="font-mono text-sm font-medium uppercase text-gray-200">
                   {textColorInput}
                 </span>
@@ -89,7 +95,10 @@ export function Admin() {
               />
 
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">Cor de fundo</span>
+                <span className="text-xs text-gray-400">
+                  Cor de fundo
+                </span>
+
                 <span className="font-mono text-sm font-medium uppercase text-gray-200">
                   {backgroundColorInput}
                 </span>
@@ -111,14 +120,16 @@ export function Admin() {
               />
 
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">Cor de fundo</span>
+                <span className="text-xs text-gray-400">
+                  Cor de fundo
+                </span>
+
                 <span className="font-mono text-sm font-medium uppercase text-gray-200">
                   {backgroundColorInput}
                 </span>
               </div>
             </div>
           </div>
-
 
           <div className="flex flex-col gap-3 rounded-2xl border border-gray-800 bg-gray-900 p-5 shadow-lg transition-all duration-200 hover:border-violet-500/40">
             <label className="text-sm font-semibold text-gray-200">
@@ -134,7 +145,10 @@ export function Admin() {
               />
 
               <div className="flex flex-col">
-                <span className="text-xs text-gray-400">Cor de fundo</span>
+                <span className="text-xs text-gray-400">
+                  Cor de fundo
+                </span>
+
                 <span className="font-mono text-sm font-medium uppercase text-gray-200">
                   {backgroundColorInput}
                 </span>
@@ -160,16 +174,22 @@ export function Admin() {
               }}
             >
               <div className="flex items-center gap-3">
-                <div style={{backgroundColor: backgroundColorIcon}} className="p-3 rounded-md text-pink-600">
+                <div
+                  style={{ backgroundColor: backgroundColorIcon }}
+                  className="p-3 rounded-md text-pink-600"
+                >
                   <FiYoutube size={22} />
                 </div>
+
                 <div className="text-left">
                   <p className="font-medium">Canal no YouTube</p>
+
                   <p style={{ color: subtitleTextColor }}>
                     Tutoriais e projetos
                   </p>
                 </div>
               </div>
+
               <FiLink className="text-gray-400" />
             </a>
           </article>
