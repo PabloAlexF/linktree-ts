@@ -1,11 +1,11 @@
 import { Header } from "../../components/Header";
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, type SubmitEvent} from "react";
 import { Input } from "../../components/Input";
 import { FiLink, FiYoutube, FiSend } from "react-icons/fi";
 
 // Importando Firestore para manipular o banco de dados
 import { db } from "../../services/firebaseConnection";
-import { addDoc, collection } from "firebase/firestore";
+import { addDoc, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "firebase/firestore";
 
 export function Admin() {
   const [nameLink, setNameLink] = useState("");
@@ -15,7 +15,38 @@ export function Admin() {
   const [subtitleTextColor, setSubtitleTextColor] = useState("#f2f2f2");
   const [backgroundColorIcon, setbackgroundColorIcon] = useState("transparent");
 
-  async function handleRegister(e: FormEvent<HTMLFormElement>) {
+
+
+  useEffect(() => {
+
+    const linksRef = collection(db, "links");
+    const queryRef = query(linksRef, orderBy("created", "asc"))
+
+
+    const unsub = onSnapshot(queryRef, (snapshot) => {
+        const lista = []
+
+        snapshot.forEach((doc) => {
+          lista.push({
+            id: doc.id,
+            name: doc.data().name,
+            url: doc.data().url,
+            bg: doc.data().bg,
+            color: doc.data().color,
+            subtitleColor: doc.data().subtitleColor,
+            bgColor: doc.data().bgColor,
+          })
+        })
+    })
+
+    return() =>{
+      unsub()
+    }
+
+  }, [])
+
+
+  async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
 
     try {
