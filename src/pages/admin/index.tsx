@@ -7,6 +7,7 @@ import {
   FiSend,
   FiLinkedin,
   FiGithub,
+  FiTrash,
 } from "react-icons/fi";
 
 // Importando Firestore para manipular o banco de dados
@@ -17,6 +18,8 @@ import {
   onSnapshot,
   query,
   orderBy,
+  doc,
+  deleteDoc,
 } from "firebase/firestore";
 
 interface linkProps {
@@ -27,6 +30,21 @@ interface linkProps {
   color: string;
   subtitleColor: string;
   bgColor: string;
+  icon: string;
+}
+
+ async function handleDelete(id: string) {
+  const docRef = doc(db, "links", id);
+  try {
+    if (!docRef) {
+      console.log("Este link não existe!")
+      return;
+    } 
+
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.log(`Não foi possível realizar a exclusão do link cadastrado! Verifique o erro: ${error}`)
+  }
 }
 
 export function Admin() {
@@ -57,6 +75,7 @@ export function Admin() {
           color: doc.data().color,
           subtitleColor: doc.data().subtitleColor,
           bgColor: doc.data().bgColor,
+          icon: doc.data().iconSelected,
         });
       });
 
@@ -85,6 +104,7 @@ export function Admin() {
         subtitleColor: subtitleTextColor,
         bgColor: backgroundColorInput,
         created: new Date(),
+        icon: iconSelected,
       });
 
       setNameLink("");
@@ -185,7 +205,7 @@ export function Admin() {
 
             <div className="flex flex-col gap-2 rounded-2xl border border-gray-800 bg-gray-900 p-3 shadow-lg transition-all duration-200 hover:border-violet-500/40">
               <label className="text-xs font-semibold text-gray-200">
-                Cor do subtítulo
+                Cor do link
               </label>
 
               <div className="flex items-center gap-3">
@@ -280,7 +300,7 @@ export function Admin() {
           </button>
         </div>
 
-        {/* ===== COLUNA DIREITA: preview + lista ===== */}
+        {}
         <div className="flex flex-col gap-4 lg:min-h-0">
           {/* Pré-visualização */}
           {nameLink !== "" && (
@@ -339,7 +359,7 @@ export function Admin() {
             </article>
           )}
 
-          {/* Links cadastrados: ocupa o espaço que sobra (flex-1) e rola por dentro */}
+          {/* Links cadastrados*/}
           <section className="flex flex-col rounded-2xl border border-gray-800 bg-gray-900 p-4 shadow-lg">
             <div className="mb-4 flex items-center justify-between">
               <div>
@@ -377,17 +397,14 @@ export function Admin() {
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                       style={{ backgroundColor: link.bg || "#292929" }}
                     >
-                      <FiYoutube
-                        size={21}
-                        style={{ color: link.color || "#f1f1f1" }}
-                      />
+                      {iconSelected === "youtube" && <FiYoutube size={22} /> || iconSelected === "linkedin" && <FiLinkedin size={22} /> || iconSelected === "github" && <FiGithub size={22} /> }
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-gray-100">
+                      <p style={{color: link.color}} className="truncate text-sm font-semibold text-gray-100">
                         {link.name}
                       </p>
-                      <p className="truncate text-xs text-gray-500">
+                      <p style={{color: link.subtitleColor}} className="truncate text-xs">
                         {link.url}
                       </p>
                     </div>
@@ -401,6 +418,10 @@ export function Admin() {
                     >
                       <FiLink size={18} />
                     </a>
+
+                    <button onClick={() => handleDelete(link.id)} >
+                      <FiTrash size={18} color="white"/>
+                    </button>
                   </article>
                 ))}
               </div>
