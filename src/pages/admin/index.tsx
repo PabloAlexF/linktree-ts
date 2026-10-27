@@ -397,7 +397,7 @@ export function Admin() {
                       className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                       style={{ backgroundColor: link.bg || "#292929" }}
                     >
-                      {iconSelected === "youtube" && <FiYoutube size={22} /> || iconSelected === "linkedin" && <FiLinkedin size={22} /> || iconSelected === "github" && <FiGithub size={22} /> }
+                      {link.icon === "youtube" && <FiYoutube size={22} /> || link.icon === "linkedin" && <FiLinkedin size={22} /> || link.icon === "github" && <FiGithub size={22} /> }
                     </div>
 
                     <div className="min-w-0 flex-1">
