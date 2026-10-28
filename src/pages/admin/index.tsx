@@ -1,28 +1,26 @@
 import { Header } from "../../components/Header";
-import { useState, useEffect, type SubmitEvent} from "react";
 import { Input } from "../../components/Input";
+import { useEffect, useState, type SubmitEvent } from "react";
 import {
-  FiLink,
-  FiYoutube,
-  FiSend,
-  FiLinkedin,
   FiGithub,
+  FiLink,
+  FiLinkedin,
+  FiSend,
   FiTrash,
+  FiYoutube,
 } from "react-icons/fi";
-
-// Importando Firestore para manipular o banco de dados
-import { db } from "../../services/firebaseConnection";
 import {
   addDoc,
   collection,
-  onSnapshot,
-  query,
-  orderBy,
-  doc,
   deleteDoc,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
 } from "firebase/firestore";
+import { db } from "../../services/firebaseConnection";
 
-interface linkProps {
+interface LinkProps {
   id: string;
   name: string;
   url: string;
@@ -33,72 +31,74 @@ interface linkProps {
   icon: string;
 }
 
- async function handleDelete(id: string) {
-  const docRef = doc(db, "links", id);
-  try {
-    if (!docRef) {
-      console.log("Este link não existe!")
-      return;
-    } 
-
-    await deleteDoc(docRef);
-  } catch (error) {
-    console.log(`Não foi possível realizar a exclusão do link cadastrado! Verifique o erro: ${error}`)
-  }
-}
+const iconOptions = [
+  { value: "youtube", label: "YouTube", Icon: FiYoutube },
+  { value: "github", label: "GitHub", Icon: FiGithub },
+  { value: "linkedin", label: "LinkedIn", Icon: FiLinkedin },
+];
 
 export function Admin() {
   const [nameLink, setNameLink] = useState("");
   const [urlLink, setUrlLink] = useState("");
-  const [textColorInput, settextColorInput] = useState("#f1f1f1");
-  const [backgroundColorInput, setbackgroundColorInput] = useState("#121212");
-  const [subtitleTextColor, setSubtitleTextColor] = useState("#f2f2f2");
-  const [backgroundColorIcon, setbackgroundColorIcon] = useState("transparent");
-  const [iconSelected, seticonSelected] = useState("")
-  
-
-  const [links, setLinks] = useState<linkProps[]>([]);
+  const [textColorInput, setTextColorInput] = useState("#f1f1f1");
+  const [backgroundColorInput, setBackgroundColorInput] = useState("#121212");
+  const [subtitleTextColor, setSubtitleTextColor] = useState("#b8b8b8");
+  const [backgroundColorIcon, setBackgroundColorIcon] = useState("#292929");
+  const [iconSelected, setIconSelected] = useState("");
+  const [links, setLinks] = useState<LinkProps[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const linksRef = collection(db, "links");
-    const queryRef = query(linksRef, orderBy("created", "asc"));
+    const queryRef = query(linksRef, orderBy("created", "desc"));
 
-    const unsub = onSnapshot(queryRef, (snapshot) => {
-      const lista: linkProps[] = [];
+    const unsubscribe = onSnapshot(
+      queryRef,
+      (snapshot) => {
+        const list: LinkProps[] = snapshot.docs.map((linkDoc) => {
+          const data = linkDoc.data();
 
-      snapshot.forEach((doc) => {
-        lista.push({
-          id: doc.id,
-          name: doc.data().name,
-          url: doc.data().url,
-          bg: doc.data().bg,
-          color: doc.data().color,
-          subtitleColor: doc.data().subtitleColor,
-          bgColor: doc.data().bgColor,
-          icon: doc.data().iconSelected,
+          return {
+            id: linkDoc.id,
+            name: data.name ?? "",
+            url: data.url ?? "",
+            bg: data.bg ?? "#292929",
+            color: data.color ?? "#f1f1f1",
+            subtitleColor: data.subtitleColor ?? "#b8b8b8",
+            bgColor: data.bgColor ?? "#121212",
+            icon: data.icon ?? "",
+          };
         });
-      });
 
-      setLinks(lista);
-    });
+        setLinks(list);
+      },
+      (error) => {
+        console.error("Não foi possível carregar os links:", error);
+        setErrorMessage("Não foi possível carregar os links salvos.");
+      },
+    );
 
-    return () => {
-      unsub();
-    };
+    return () => unsubscribe();
   }, []);
 
   async function handleRegister(e: SubmitEvent) {
     e.preventDefault();
+    setMessage("");
+    setErrorMessage("");
+
+    if (!nameLink.trim() || !urlLink.trim() || !iconSelected) {
+      setErrorMessage("Preencha o nome, a URL e selecione um ícone.");
+      return;
+    }
 
     try {
-      if (nameLink.trim() === "" || urlLink.trim() === "") {
-        alert("Preencha todos os campos!");
-        return;
-      }
+      setSaving(true);
 
       await addDoc(collection(db, "links"), {
-        name: nameLink,
-        url: urlLink,
+        name: nameLink.trim(),
+        url: urlLink.trim(),
         bg: backgroundColorIcon,
         color: textColorInput,
         subtitleColor: subtitleTextColor,
@@ -109,326 +109,369 @@ export function Admin() {
 
       setNameLink("");
       setUrlLink("");
-
-      console.log("Cadastrado com sucesso!");
+      setIconSelected("");
+      setMessage("Link cadastrado com sucesso!");
     } catch (error) {
-      console.log(
-        `Impossível realizar o cadastro desejado, por favor, confira o erro: ${error}`,
+      console.error("Erro ao cadastrar o link:", error);
+      setErrorMessage(
+        "Não foi possível cadastrar o link. Verifique sua conexão e as permissões do Firebase.",
       );
+    } finally {
+      setSaving(false);
     }
   }
 
+  async function handleDelete(id: string) {
+    const confirmed = window.confirm("Deseja realmente excluir este link?");
+    if (!confirmed) return;
+
+    setMessage("");
+    setErrorMessage("");
+
+    try {
+      await deleteDoc(doc(db, "links", id));
+      setMessage("Link excluído com sucesso.");
+    } catch (error) {
+      console.error("Erro ao excluir o link:", error);
+      setErrorMessage("Não foi possível excluir o link.");
+    }
+  }
+
+  function renderIcon(iconName: string, size = 21) {
+    switch (iconName) {
+      case "youtube":
+        return <FiYoutube size={size} />;
+      case "github":
+        return <FiGithub size={size} />;
+      case "linkedin":
+        return <FiLinkedin size={size} />;
+      default:
+        return <FiLink size={size} />;
+    }
+  }
+
+  const labelClass = "mb-1.5 block text-sm font-medium text-gray-300";
+  const colorPanelClass = "rounded-lg border border-gray-800 bg-gray-900 p-3";
+  const colorInputClass =
+    "h-9 w-11 cursor-pointer rounded-md border border-gray-700 bg-gray-800 p-1";
+
   return (
-    <div className="flex min-h-screen flex-col items-center px-4 pb-4 lg:h-screen lg:overflow-hidden">
+    <div className="min-h-screen bg-gray-950 px-4 pb-8 text-gray-100">
       <Header />
 
-      <form
-        onSubmit={handleRegister}
-        className="mt-4 grid w-full max-w-5xl flex-1 grid-cols-1 gap-4 lg:min-h-0 lg:grid-cols-2"
-      >
-        {/* ===== COLUNA ESQUERDA: formulário ===== */}
-        <div className="flex flex-col gap-2 lg:min-h-0">
-          <label
-            htmlFor="linkName"
-            className="text-sm font-semibold text-gray-200"
-          >
-            Nome do link
-          </label>
-
-          <Input
-            placeholder="Digite o nome do link..."
-            value={nameLink}
-            onChange={(e) => setNameLink(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-b-blue-500 focus:ring-4 focus:ring-violet-500/10"
-          />
-
-          <label
-            htmlFor="linkUrl"
-            className="text-sm font-semibold text-gray-200"
-          >
-            Url do link
-          </label>
-
-          <Input
-            type="url"
-            placeholder="Digite a URL do link..."
-            value={urlLink}
-            onChange={(e) => setUrlLink(e.target.value)}
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-b-blue-500 focus:ring-4 focus:ring-violet-500/10"
-          />
-
-          {/* Grid 2x2 com os seletores de cor, mais compactos */}
-          <section className="my-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col gap-2 rounded-2xl border border-gray-800 bg-gray-900 p-3 shadow-lg transition-all duration-200 hover:border-violet-500/40">
-              <label className="text-xs font-semibold text-gray-200">
-                Cor do título do link
-              </label>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={textColorInput}
-                  onChange={(e) => settextColorInput(e.target.value)}
-                  className="h-10 w-12 cursor-pointer overflow-hidden rounded-xl border border-gray-700 bg-gray-800 p-1 transition-transform duration-200 hover:scale-105"
-                />
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">Cor do texto</span>
-                  <span className="font-mono text-sm font-medium uppercase text-gray-200">
-                    {textColorInput}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-2xl border border-gray-800 bg-gray-900 p-3 shadow-lg transition-all duration-200 hover:border-violet-500/40">
-              <label className="text-xs font-semibold text-gray-200">
-                Cor de fundo do link
-              </label>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={backgroundColorInput}
-                  onChange={(e) => setbackgroundColorInput(e.target.value)}
-                  className="h-10 w-12 cursor-pointer overflow-hidden rounded-xl border border-gray-700 bg-gray-800 p-1 transition-transform duration-200 hover:scale-105"
-                />
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">Cor de fundo</span>
-                  <span className="font-mono text-sm font-medium uppercase text-gray-200">
-                    {backgroundColorInput}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-2xl border border-gray-800 bg-gray-900 p-3 shadow-lg transition-all duration-200 hover:border-violet-500/40">
-              <label className="text-xs font-semibold text-gray-200">
-                Cor do link
-              </label>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={subtitleTextColor}
-                  onChange={(e) => setSubtitleTextColor(e.target.value)}
-                  className="h-10 w-12 cursor-pointer overflow-hidden rounded-xl border border-gray-700 bg-gray-800 p-1 transition-transform duration-200 hover:scale-105"
-                />
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">
-                    Cor do subtítulo
-                  </span>
-                  <span className="font-mono text-sm font-medium uppercase text-gray-200">
-                    {subtitleTextColor}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-2 rounded-2xl border border-gray-800 bg-gray-900 p-3 shadow-lg transition-all duration-200 hover:border-violet-500/40">
-              <label className="text-xs font-semibold text-gray-200">
-                Cor de fundo do ícone
-              </label>
-
-              <div className="flex items-center gap-3">
-                <input
-                  type="color"
-                  value={backgroundColorIcon}
-                  onChange={(e) => setbackgroundColorIcon(e.target.value)}
-                  className="h-10 w-12 cursor-pointer overflow-hidden rounded-xl border border-gray-700 bg-gray-800 p-1 transition-transform duration-200 hover:scale-105"
-                />
-
-                <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">
-                    Cor de fundo do ícone
-                  </span>
-                  <span className="font-mono text-sm font-medium uppercase text-gray-200">
-                    {backgroundColorIcon}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* escolher ícone */}
-          <section className="flex items-center justify-center py-1">
-            <div className="flex items-center gap-4">
-              {/* YouTube */}
-              <button
-                type="button"
-                aria-label="YouTube"
-                className="group flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-red-500 hover:bg-red-500 hover:text-white hover:shadow-lg hover:shadow-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
-                onClick={() => seticonSelected("youtube")}
-              >
-                <FiYoutube size={22} />
-              </button>
-
-              {/* GitHub */}
-              <button
-                type="button"
-                aria-label="GitHub"
-                className="group flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-gray-900 hover:bg-gray-900 hover:text-white hover:shadow-lg hover:shadow-gray-900/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 focus-visible:ring-offset-2"
-                onClick={() => seticonSelected("github")}
-              >
-                <FiGithub size={22} />
-              </button>
-
-              {/* LinkedIn */}
-              <button
-                type="button"
-                aria-label="LinkedIn"
-                className="group flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-600 hover:bg-blue-600 hover:text-white hover:shadow-lg hover:shadow-blue-600/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2"
-                onClick={() => seticonSelected("linkedin")}
-              >
-                <FiLinkedin size={22} />
-              </button>
-            </div>
-          </section>
-
-          {/* Botão de enviar */}
-          <button
-            type="submit"
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition-all duration-200 hover:-translate-y-0.5 hover:bg-violet-500 hover:shadow-xl hover:shadow-violet-950/40 focus:outline-none focus:ring-2 focus:ring-violet-400 focus:ring-offset-2 focus:ring-offset-gray-950 active:translate-y-0"
-          >
-            <FiSend
-              size={18}
-              className="transition-transform duration-200 group-hover:translate-x-1"
-            />
-            Enviar link
-          </button>
+      <main className="mx-auto w-full max-w-6xl py-6">
+        <div className="mb-6">
+          <h1 className="text-xl font-semibold tracking-tight text-white">
+            Gerenciar links
+          </h1>
+          <p className="mt-1 text-sm text-gray-400">
+            Cadastre links e ajuste como eles serão exibidos.
+          </p>
         </div>
 
-        {}
-        <div className="flex flex-col gap-4 lg:min-h-0">
-          {/* Pré-visualização */}
-          {nameLink !== "" && (
-            <article className="rounded-2xl border border-gray-800 bg-gray-900 p-4 shadow-lg">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-semibold text-white">
-                    Pré-visualização
-                  </h3>
-                  <p className="mt-1 text-xs text-gray-400">
-                    Veja como seu link será exibido.
-                  </p>
+        {(message || errorMessage) && (
+          <div
+            role="status"
+            className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
+              errorMessage
+                ? "border-red-900 bg-red-950/40 text-red-300"
+                : "border-green-900 bg-green-950/30 text-green-300"
+            }`}
+          >
+            {errorMessage || message}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <form
+            onSubmit={handleRegister}
+            className="rounded-xl border border-gray-800 bg-gray-900 p-5"
+          >
+            <h2 className="mb-5 text-base font-semibold text-white">
+              Novo link
+            </h2>
+
+            <div className="mb-4">
+              <label htmlFor="linkName" className={labelClass}>
+                Nome do link
+              </label>
+              <Input
+                id="linkName"
+                placeholder="Ex.: Meu portfólio"
+                value={nameLink}
+                onChange={(e) => setNameLink(e.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-white outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label htmlFor="linkUrl" className={labelClass}>
+                URL
+              </label>
+              <Input
+                id="linkUrl"
+                type="url"
+                placeholder="https://exemplo.com"
+                value={urlLink}
+                onChange={(e) => setUrlLink(e.target.value)}
+                className="w-full rounded-lg border border-gray-700 bg-gray-950 px-3 py-2.5 text-sm text-white outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 placeholder:text-gray-500"
+              />
+            </div>
+
+            <div className="mb-5">
+              <p className={labelClass}>Ícone</p>
+              <div className="flex gap-2">
+                {iconOptions.map(({ value, label, Icon }) => {
+                  const selected = iconSelected === value;
+
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-label={label}
+                      aria-pressed={selected}
+                      title={label}
+                      onClick={() => setIconSelected(value)}
+                      className={`flex h-10 w-10 items-center justify-center rounded-lg border transition ${
+                        selected
+                          ? "border-violet-400 bg-violet-500/15 text-violet-300"
+                          : "border-gray-700 bg-gray-950 text-gray-300 hover:border-gray-500 hover:text-white"
+                      }`}
+                    >
+                      <Icon size={20} />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <p className={labelClass}>Aparência</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className={colorPanelClass}>
+                  <label
+                    htmlFor="titleColor"
+                    className="mb-2 block text-xs text-gray-400"
+                  >
+                    Cor do título
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="titleColor"
+                      type="color"
+                      value={textColorInput}
+                      onChange={(e) => setTextColorInput(e.target.value)}
+                      className={colorInputClass}
+                    />
+                    <span className="font-mono text-xs text-gray-300">
+                      {textColorInput.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
 
-                <span className="rounded-lg bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
-                  Preview
+                <div className={colorPanelClass}>
+                  <label
+                    htmlFor="linkBackground"
+                    className="mb-2 block text-xs text-gray-400"
+                  >
+                    Fundo do link
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="linkBackground"
+                      type="color"
+                      value={backgroundColorInput}
+                      onChange={(e) => setBackgroundColorInput(e.target.value)}
+                      className={colorInputClass}
+                    />
+                    <span className="font-mono text-xs text-gray-300">
+                      {backgroundColorInput.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={colorPanelClass}>
+                  <label
+                    htmlFor="subtitleColor"
+                    className="mb-2 block text-xs text-gray-400"
+                  >
+                    Cor da URL
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="subtitleColor"
+                      type="color"
+                      value={subtitleTextColor}
+                      onChange={(e) => setSubtitleTextColor(e.target.value)}
+                      className={colorInputClass}
+                    />
+                    <span className="font-mono text-xs text-gray-300">
+                      {subtitleTextColor.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className={colorPanelClass}>
+                  <label
+                    htmlFor="iconBackground"
+                    className="mb-2 block text-xs text-gray-400"
+                  >
+                    Fundo do ícone
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="iconBackground"
+                      type="color"
+                      value={backgroundColorIcon}
+                      onChange={(e) => setBackgroundColorIcon(e.target.value)}
+                      className={colorInputClass}
+                    />
+                    <span className="font-mono text-xs text-gray-300">
+                      {backgroundColorIcon.toUpperCase()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <FiSend size={16} />
+              {saving ? "Salvando..." : "Cadastrar link"}
+            </button>
+          </form>
+
+          <div className="flex flex-col gap-5">
+            <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+              <div className="mb-4">
+                <h2 className="text-base font-semibold text-white">
+                  Pré-visualização
+                </h2>
+                <p className="mt-1 text-sm text-gray-400">
+                  A aparência do link será atualizada conforme você editar.
+                </p>
+              </div>
+
+              {nameLink.trim() || urlLink.trim() || iconSelected ? (
+                <div
+                  className="flex items-center gap-3 rounded-lg border border-gray-700 px-4 py-3"
+                  style={{ backgroundColor: backgroundColorInput }}
+                >
+                  <div
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg"
+                    style={{
+                      backgroundColor: backgroundColorIcon,
+                      color: textColorInput,
+                    }}
+                  >
+                    {renderIcon(iconSelected)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className="truncate text-sm font-medium"
+                      style={{ color: textColorInput }}
+                    >
+                      {nameLink || "Nome do link"}
+                    </p>
+                    <p
+                      className="mt-1 truncate text-xs"
+                      style={{ color: subtitleTextColor }}
+                    >
+                      {urlLink || "https://exemplo.com"}
+                    </p>
+                  </div>
+                  <FiLink className="shrink-0 text-gray-400" size={18} />
+                </div>
+              ) : (
+                <div className="rounded-lg border border-dashed border-gray-700 px-4 py-8 text-center text-sm text-gray-500">
+                  Preencha os campos para visualizar o link.
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-semibold text-white">
+                    Links cadastrados
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-400">
+                    Links armazenados no Firebase.
+                  </p>
+                </div>
+                <span className="rounded-md bg-gray-800 px-2.5 py-1 text-sm text-gray-300">
+                  {links.length}
                 </span>
               </div>
 
-              <a
-                href={urlLink || "#"}
-                onClick={(e) => e.preventDefault()}
-                className="group block rounded-xl border border-white/10 px-5 py-3 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-                style={{
-                  color: textColorInput,
-                  backgroundColor: backgroundColorInput,
-                }}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div
-                      style={{ backgroundColor: backgroundColorIcon }}
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-                    >
-                      {iconSelected === "youtube" && <FiYoutube size={22} /> || iconSelected === "linkedin" && <FiLinkedin size={22} /> || iconSelected === "github" && <FiGithub size={22} /> }
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate font-semibold">{nameLink}</p>
-
-                      <p
-                        className="mt-1 truncate text-sm"
-                        style={{ color: subtitleTextColor }}
-                      >
-                        {urlLink || "Sua URL aparecerá aqui"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <FiLink
-                    size={20}
-                    className="shrink-0 opacity-60 transition-transform duration-300 group-hover:translate-x-1"
-                  />
+              {links.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-gray-700 px-4 py-8 text-center text-sm text-gray-500">
+                  Nenhum link cadastrado ainda.
                 </div>
-              </a>
-            </article>
-          )}
-
-          {/* Links cadastrados*/}
-          <section className="flex flex-col rounded-2xl border border-gray-800 bg-gray-900 p-4 shadow-lg">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-white">
-                  Links cadastrados
-                </h3>
-                <p className="mt-1 text-xs text-gray-400">
-                  Visualize os links salvos no Firebase.
-                </p>
-              </div>
-
-              <span className="rounded-lg bg-violet-500/10 px-3 py-1.5 text-sm font-semibold text-violet-300">
-                {links.length}
-              </span>
-            </div>
-
-            {links.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-gray-700 px-4 py-8 text-center">
-                <FiLink size={26} className="mx-auto text-gray-500" />
-                <p className="mt-3 text-sm font-medium text-gray-300">
-                  Nenhum link cadastrado
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Os links cadastrados aparecerão aqui.
-                </p>
-              </div>
-            ) : (
-              <div className="flex max-h-72 flex-col gap-3 overflow-y-auto pr-1 lg:max-h-[45vh]">
-                {links.map((link) => (
-                  <article
-                    key={link.id}
-                    className="flex min-w-0 items-center gap-3 rounded-xl border border-gray-800 bg-gray-950 p-3 transition-all duration-200 hover:border-violet-500/40"
-                  >
-                    <div
-                      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                      style={{ backgroundColor: link.bg || "#292929" }}
+              ) : (
+                <div className="flex max-h-[420px] flex-col gap-2 overflow-y-auto pr-1">
+                  {links.map((link) => (
+                    <article
+                      key={link.id}
+                      style={{backgroundColor: link.bg}}
+                      className="flex min-w-0 items-center gap-3 rounded-lg "
                     >
-                      {link.icon === "youtube" && <FiYoutube size={22} /> || link.icon === "linkedin" && <FiLinkedin size={22} /> || link.icon === "github" && <FiGithub size={22} /> }
-                    </div>
+                      <div
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                        style={{
+                          backgroundColor: link.bg || "#292929",
+                          color: link.color || "#f1f1f1",
+                        }}
+                      >
+                        {renderIcon(link.icon, 20)}
+                      </div>
 
-                    <div className="min-w-0 flex-1">
-                      <p style={{color: link.color}} className="truncate text-sm font-semibold text-gray-100">
-                        {link.name}
-                      </p>
-                      <p style={{color: link.subtitleColor}} className="truncate text-xs">
-                        {link.url}
-                      </p>
-                    </div>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="truncate text-sm font-medium"
+                          style={{ color: link.color || "#f1f1f1" }}
+                        >
+                          {link.name}
+                        </p>
+                        <p
+                          className="truncate text-xs"
+                          style={{ color: link.subtitleColor || "#b8b8b8" }}
+                        >
+                          {link.url}
+                        </p>
+                      </div>
 
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={`Abrir ${link.name}`}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-gray-400 transition-colors hover:bg-violet-500/10 hover:text-violet-300"
-                    >
-                      <FiLink size={18} />
-                    </a>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`Abrir ${link.name} em uma nova aba`}
+                        title="Abrir link"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-800 hover:text-white"
+                      >
+                        <FiLink size={17} />
+                      </a>
 
-                    <button onClick={() => handleDelete(link.id)} >
-                      <FiTrash size={18} color="white"/>
-                    </button>
-                  </article>
-                ))}
-              </div>
-            )}
-          </section>
+                      <button
+                        type="button"
+                        aria-label={`Excluir ${link.name}`}
+                        title="Excluir link"
+                        onClick={() => handleDelete(link.id)}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-red-950 hover:text-red-300"
+                      >
+                        <FiTrash size={16} />
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          </div>
         </div>
-      </form>
+      </main>
     </div>
   );
 }
