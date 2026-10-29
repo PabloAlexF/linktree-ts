@@ -4,6 +4,7 @@ import { Input } from "../../components/Input";
 import { setDoc, doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/firebaseConnection";
 
+
 export function NetWorks() {
   const [facebook, setFacebook] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -11,8 +12,24 @@ export function NetWorks() {
 
     useEffect(() => {
     async function loadLinks() {
-        const docRef = doc(db, "social", "link");
+          const docRef = doc(db, "social", "link")
+          const docSnapShot = await getDoc(docRef);
+
+          try {
+            if (docSnapShot.exists()) {
+              setFacebook(docSnapShot.data()?.facebook)
+              setInstagram(docSnapShot.data()?.instagram)
+              setWhatsapp(docSnapShot.data()?.whatsapp)
+
+              return;
+            }
+          } catch (error) {
+            console.log(`Não foi possível carregar os links! ${error}`)
+          }
     }
+
+
+    loadLinks();
     }, [])
 
 
